@@ -1,0 +1,54 @@
+name: taskworker
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-taskworker}
+      POSTGRES_USER: ${POSTGRES_USER:-taskworker}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-taskworker_dev}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  api:
+    build:
+      context: .
+      dockerfile: src/TaskWorker.Api/Dockerfile
+    environment:
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__Postgres: "Host=postgres;Port=5432;Database=${POSTGRES_DB:-taskworker};Username=${POSTGRES_USER:-taskworker};Password=${POSTGRES_PASSWORD:-taskworker_dev}"
+    ports:
+      - "${API_PORT:-8080}:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  worker:
+    build:
+      context: .
+      dockerfile: src/TaskWorker.Worker/Dockerfile
+    environment:
+      ConnectionStrings__Postgres: "Host=postgres;Port=5432;Database=${POSTGRES_DB:-taskworker};Username=${POSTGRES_USER:-taskworker};Password=${POSTGRES_PASSWORD:-taskworker_dev}"
+      Worker__BatchSize: "${WORKER_BATCH_SIZE:-10}"
+      Worker__PollInterval: "00:00:01"
+      Worker__LeaseTimeout: "00:02:00"
+      Worker__LeaseRenewalInterval: "00:00:30"
+      Worker__LeaseRecoveryInterval: "00:00:30"
+      Worker__Retry__BaseDelay: "00:00:02"
+      Worker__Retry__MaxDelay: "00:01:00"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  postgres-data:
