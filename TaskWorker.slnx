@@ -1,0 +1,12 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/TaskWorker.Api/TaskWorker.Api.csproj" />
+    <Project Path="src/TaskWorker.Core/TaskWorker.Core.csproj" />
+    <Project Path="src/TaskWorker.Infrastructure/TaskWorker.Infrastructure.csproj" />
+    <Project Path="src/TaskWorker.Worker/TaskWorker.Worker.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/TaskWorker.IntegrationTests/TaskWorker.IntegrationTests.csproj" />
+    <Project Path="tests/TaskWorker.UnitTests/TaskWorker.UnitTests.csproj" />
+  </Folder>
+</Solution>
